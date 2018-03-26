@@ -104,12 +104,6 @@ Then(/^all expected elements are present in the search results$/) do
   expect(@test_site.section_experiments.search_results.first).to be_all_there
 end
 
-Then(/^I can run javascript against the search results$/) do
-  @test_site.section_experiments.search_results.first.set_cell_value
-  expect(@test_site.section_experiments.search_results.first.cell_value).to eq('wibble')
-  expect(@test_site.section_experiments.search_results.first.cell_value).to have_content('wibble')
-end
-
 Then(/^I can see individual people in the people list$/) do
   expect(@test_site.home.people.individuals.size).to eq(4)
   expect(@test_site.home.people.individuals(count: 4).size).to eq(4)

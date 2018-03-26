@@ -1,8 +1,8 @@
 GIT
   remote: git://github.com/teamcapybara/capybara.git
-  revision: f2a431931f981a1b67784aba9a6d7dddd3ee8509
+  revision: 4095e1dbb7ebe743b87ba10ebcfc7c50ff6c9f0a
   specs:
-    capybara (3.0.0.rc1)
+    capybara (3.0.0.rc2)
       addressable
       mini_mime (>= 0.1.3)
       nokogiri (~> 1.8)
@@ -23,7 +23,7 @@ GEM
       public_suffix (>= 2.0.2, < 4.0)
     ast (2.4.0)
     builder (3.2.3)
-    byebug (10.0.0)
+    byebug (10.0.1)
     childprocess (0.9.0)
       ffi (~> 1.0, >= 1.0.11)
     cucumber (2.4.0)
@@ -47,7 +47,7 @@ GEM
     nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
     parallel (1.12.1)
-    parser (2.5.0.4)
+    parser (2.5.0.5)
       ast (~> 2.4.0)
     powerpack (0.1.1)
     public_suffix (3.0.2)
@@ -55,7 +55,7 @@ GEM
     rack-test (0.8.3)
       rack (>= 1.0, < 3)
     rainbow (3.0.0)
-    rake (12.3.0)
+    rake (12.3.1)
     rspec (3.7.0)
       rspec-core (~> 3.7.0)
       rspec-expectations (~> 3.7.0)
@@ -69,7 +69,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.7.0)
     rspec-support (3.7.1)
-    rubocop (0.53.0)
+    rubocop (0.54.0)
       parallel (~> 1.10)
       parser (>= 2.5)
       powerpack (~> 0.1)

@@ -24,12 +24,8 @@ module CapybaraPage
       root_element.text
     end
 
-    def execute_script(input)
-      Capybara.current_session.execute_script input
-    end
-
-    def evaluate_script(input)
-      Capybara.current_session.evaluate_script input
+    def session
+      root_element.session
     end
 
     def parent_page

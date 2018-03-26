@@ -7,6 +7,10 @@ CapybaraPage is an experimental project/fork of [SitePrism](https://github.com/n
 
 [![Build Status](https://travis-ci.org/twalpole/capybara_page.png)](https://travis-ci.org/twalpole/capybara_page)
 
+# DON'T USE
+
+This repo is experimental and volatile, it is meant purely for experimentation at the current time and not intended for actual use testing another project.
+
 ## Supported Rubies / Browsers
 
 CapybaraPage is built and tested to work on Ruby 2.5, and currently requires the latest master branch of Capybara.
@@ -1596,38 +1600,6 @@ end
 ## CapybaraPage Configuration
 
 CapybaraPage can be configured to change its behaviour.
-
-### Using Capybara Implicit Waits
-
-By default, CapybaraPage element and section methods do not utilize
-Capybara's implicit wait methodology and will return immediately if
-the element or section requested is not found on the page.  Add the
-following code to your spec_helper file to enable Capybara's implicit
-wait methodology to pass through:
-
-```ruby
-CapybaraPage.configure do |config|
-  config.use_implicit_waits = true
-end
-```
-
-This enables you to replace this:
-
-```ruby
-# wait_until methods always wait for the element to be present on the page:
-@search_page.wait_for_search_results
-
-# Element and section methods do not:
-@search_page.search_results
-```
-
-with this:
-
-```ruby
-# With implicit waits enabled, use of wait_until methods is no longer required. This method will
-# wait for the element to be found on the page until the Capybara default timeout is reached.
-@search_page.search_results
-```
 
 # Epilogue
 

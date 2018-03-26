@@ -49,10 +49,6 @@ Feature: Page Sections
     When I navigate to the section experiments page
     Then all expected elements are present in the search results
 
-  Scenario: Check we can call JS methods against a section
-    When I navigate to the section experiments page
-    Then I can run javascript against the search results
-
   Scenario: Wait for section element
     When I navigate to the section experiments page
     Then when I wait for the section element that takes a while to appear
@@ -88,4 +84,4 @@ Feature: Page Sections
 
   Scenario: get text from page secion
     When I navigate to the home page
-    Then I can see a section's full text 
+    Then I can see a section's full text

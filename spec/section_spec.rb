@@ -55,13 +55,4 @@ describe CapybaraPage::Section do
 
     CapybaraPage::Section.new(a_page, 'div')
   end
-
-  describe 'instance' do
-    subject(:section) { CapybaraPage::Section.new('parent', 'locator') }
-
-    it 'responds to javascript methods' do
-      expect(section).to respond_to(:execute_script)
-      expect(section).to respond_to(:evaluate_script)
-    end
-  end
 end

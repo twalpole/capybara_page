@@ -28,6 +28,10 @@ module CapybaraPage
       root_element
     end
 
+    def session
+      root_element.session
+    end
+
     # Loads the page.
     # @param expansion_or_html
     # @param block [&block] An optional block to run once the page is loaded.
