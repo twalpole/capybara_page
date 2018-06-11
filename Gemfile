@@ -3,5 +3,4 @@
 source 'https://rubygems.org'
 
 gemspec
-gem 'byebug'
 gem 'capybara', github: 'teamcapybara/capybara'

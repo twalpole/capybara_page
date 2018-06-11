@@ -59,10 +59,10 @@ module CapybaraPage
       seconds = root_element.session_options.default_max_wait_time if seconds.nil?
       raise CapybaraPage::NoUrlMatcherForPage if url_matcher.nil?
 
-      start_time = Time.now
+      timer = Capybara::Helpers.timer(expire_in: seconds)
       loop do
         return true if url_matches?(expected_mappings)
-        break unless Time.now - start_time <= seconds
+        break if timer.expired?
         sleep(0.05)
       end
       false
@@ -122,7 +122,7 @@ module CapybaraPage
     end
 
     def find_all(*find_args)
-      page.all(*find_args)
+      page.find_all(*find_args)
     end
 
     def element_exists?(*find_args)

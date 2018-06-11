@@ -6,8 +6,8 @@ module CapybaraPage
 
     def element(element_name, *find_args)
       build element_name, *find_args do
-        define_method element_name.to_s do |*runtime_args, &element_block|
-          self.class.raise_if_block(self, element_name.to_s, !element_block.nil?)
+        define_method element_name.to_s do |*runtime_args, &block|
+          self.class.raise_if_block(self, element_name.to_s, !block.nil?)
           find(*self.class.merge_args(find_args, runtime_args))
         end
       end
@@ -15,8 +15,8 @@ module CapybaraPage
 
     def elements(collection_name, *find_args)
       build collection_name, *find_args do
-        define_method collection_name.to_s do |*runtime_args, &element_block|
-          self.class.raise_if_block(self, collection_name.to_s, !element_block.nil?)
+        define_method collection_name.to_s do |*runtime_args, &block|
+          self.class.raise_if_block(self, collection_name.to_s, !block.nil?)
           find_all(*self.class.merge_args(find_args, runtime_args))
         end
       end
@@ -39,8 +39,8 @@ module CapybaraPage
     def sections(section_collection_name, *args, &block)
       section_class, find_args = extract_section_options args, &block
       build section_collection_name, *find_args do
-        define_method section_collection_name do |*runtime_args, &element_block|
-          self.class.raise_if_block(self, section_collection_name.to_s, !element_block.nil?)
+        define_method section_collection_name do |*runtime_args, &blk|
+          self.class.raise_if_block(self, section_collection_name.to_s, !blk.nil?)
           find_all(*self.class.merge_args(find_args, runtime_args)).map do |element|
             section_class.new self, element
           end
@@ -69,11 +69,11 @@ module CapybaraPage
 
     def raise_if_block(obj, name, has_block)
       return unless has_block
-
       raise CapybaraPage::UnsupportedBlock, "#{obj.class}##{name}"
     end
 
     def merge_args(find_args, runtime_args, override_options = {})
+      find_args, runtime_args = find_args.dup, runtime_args.dup
       options = {}
       options.merge!(find_args.pop) if find_args.last.is_a? Hash
       options.merge!(runtime_args.pop) if runtime_args.last.is_a? Hash

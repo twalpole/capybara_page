@@ -25,10 +25,11 @@ module CapybaraPage
         _load_validations << block
       end
 
+    private
+
       def _load_validations
         @_load_validations ||= []
       end
-      private :_load_validations
     end
 
     def self.included(base)
@@ -73,6 +74,8 @@ module CapybaraPage
       load_validations_pass?
     end
 
+  private
+
     # If any load validations from page subclasses returns false, immediately return false.
     def load_validations_pass?
       self.class.load_validations.all? do |validation|
@@ -82,6 +85,5 @@ module CapybaraPage
         passed
       end
     end
-    private :load_validations_pass?
   end
 end

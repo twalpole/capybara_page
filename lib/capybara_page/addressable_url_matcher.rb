@@ -21,25 +21,28 @@ module CapybaraPage
     # or nil if the URL doesn't conform to the matcher template.
     def mappings(url)
       uri = Addressable::URI.parse(url)
-      result = {}
-      COMPONENT_NAMES.each do |component|
+      COMPONENT_NAMES.each_with_object({}) do |component, h|
         component_result = component_matches(component, uri)
         return nil unless component_result
-
-        result.merge!(component_result)
+        h.merge!(component_result)
       end
-      result
+
+      # result = {}
+      # COMPONENT_NAMES.each do |component|
+      #   component_result = component_matches(component, uri)
+      #   return nil unless component_result
+      #
+      #   result.merge!(component_result)
+      # end
+      # result
     end
 
     # Determine whether URL matches our pattern, and optionally whether the extracted mappings match
     # a hash of expected values.  You can specify values as strings, numbers or regular expressions.
     def matches?(url, expected_mappings = {})
       actual_mappings = mappings(url)
-      if actual_mappings
-        expected_mappings.empty? || all_expected_mappings_match?(expected_mappings, actual_mappings)
-      else
-        false
-      end
+      return all_expected_mappings_match?(expected_mappings, actual_mappings) if actual_mappings
+      false
     end
 
   private
@@ -67,6 +70,7 @@ module CapybaraPage
         component_url = to_substituted_uri.public_send(component).to_s
 
         next unless component_url && !component_url.empty?
+        # next if component_url.empty?
 
         reverse_substitutions.each_pair do |substituted_value, template_value|
           component_url = component_url.sub(substituted_value, template_value)
@@ -97,14 +101,10 @@ module CapybaraPage
     # Convert the pattern into an Addressable URI by substituting the template slugs with nonsense strings.
     def to_substituted_uri
       url = pattern
-      substitutions.each_pair do |slug, value|
-        url = url.sub(slug, value)
-      end
-      begin
-        Addressable::URI.parse(url)
-      rescue Addressable::URI::InvalidURIError
-        raise CapybaraPage::InvalidUrlMatcher
-      end
+      substitutions.each_pair { |slug, value| url = url.sub(slug, value) }
+      Addressable::URI.parse(url)
+    rescue Addressable::URI::InvalidURIError
+      raise CapybaraPage::InvalidUrlMatcher
     end
 
     def substitutions
