@@ -3,41 +3,45 @@
 require 'spec_helper'
 
 describe CapybaraPage::Page do
-  let(:page) { APage.new }
+  subject { Page.new }
 
-  class SingleSection < CapybaraPage::Section; end
-  class PluralSection < CapybaraPage::Section; end
+  class PluralSections < CapybaraPage::Section; end
 
-  class APage < CapybaraPage::Page
-    section  :single_section,  SingleSection, '.bob'
-    sections :plural_sections, PluralSection, '.tim'
+  class PluralSectionsWithDefaults < CapybaraPage::Section
+    set_default_search_arguments :css, '.section'
   end
 
-  describe '.section' do
-    it 'should be callable' do
-      expect(CapybaraPage::Page).to respond_to(:section)
-    end
-
-    it 'should create matching object method' do
-      expect(page).to respond_to(:single_section)
-    end
-
-    it 'should create matching existence method' do
-      expect(page).to respond_to(:has_single_section?)
-    end
+  class Page < CapybaraPage::Page
+    sections :plural_sections,               PluralSections, '.tim'
+    sections :plural_sections_with_defaults, PluralSectionsWithDefaults
   end
 
   describe '.sections' do
     it 'should be callable' do
       expect(CapybaraPage::Page).to respond_to(:sections)
     end
+  end
 
-    it 'should create matching object method' do
-      expect(page).to respond_to(:plural_sections)
+  context 'with sections `plural_sections` defined' do
+    it { is_expected.to respond_to(:plural_sections) }
+    it { is_expected.to respond_to(:has_plural_sections?) }
+  end
+
+  context 'when using sections with default search arguments and without search arguments' do
+    let(:search_arguments) { [:css, '.section', {}] }
+
+    before do
+      allow(subject)
+        .to receive(:find_all)
+        .with(*search_arguments)
+        .and_return(%i[element1 element2])
     end
 
-    it 'should create a matching existence method' do
-      expect(page).to respond_to(:has_plural_sections?)
+    it 'should use default arguments' do
+      expect(CapybaraPage::Section).to receive(:new).with(subject, :element1).ordered
+      expect(CapybaraPage::Section).to receive(:new).with(subject, :element2).ordered
+
+      subject.plural_sections_with_defaults
     end
   end
 end

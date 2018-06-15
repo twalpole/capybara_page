@@ -3,134 +3,146 @@
 require 'spec_helper'
 
 describe CapybaraPage::Page do
-  it 'should respond to load' do
-    expect(CapybaraPage::Page.new).to respond_to :load
+  class PageWithNoUrl < CapybaraPage::Page; end
+  class PageWithUrl < CapybaraPage::Page
+    set_url '/bob'
+  end
+  class PageWithUriTemplate < CapybaraPage::Page
+    set_url '/users{/username}{?query*}'
   end
 
-  it 'should respond to set_url' do
-    expect(CapybaraPage::Page).to respond_to :set_url
+  let(:page_with_no_url) { PageWithNoUrl.new }
+  let(:page_with_url) { PageWithUrl.new }
+  let(:page_with_uri_template) { PageWithUriTemplate.new }
+
+  it 'responds to section' do
+    expect(CapybaraPage::Page).to respond_to(:section)
+  end
+
+  it 'responds to sections' do
+    expect(CapybaraPage::Page).to respond_to(:sections)
+  end
+
+  it 'responds to element' do
+    expect(CapybaraPage::Page).to respond_to(:element)
+  end
+
+  it 'responds to elements' do
+    expect(CapybaraPage::Page).to respond_to(:elements)
+  end
+
+  it 'responds to set_url' do
+    expect(CapybaraPage::Page).to respond_to(:set_url)
+  end
+
+  it 'responds to set_url_matcher' do
+    expect(CapybaraPage::Page).to respond_to(:set_url_matcher)
   end
 
   it 'should be able to set a url against it' do
-    class PageToSetUrlAgainst < CapybaraPage::Page
-      set_url '/bob'
-    end
-    page = PageToSetUrlAgainst.new
-    expect(page.url).to eq('/bob')
+    expect(page_with_url.url).to eq('/bob')
   end
 
   it 'url should be nil by default' do
-    class PageDefaultUrl < CapybaraPage::Page; end
-    page = PageDefaultUrl.new
-    expect(PageDefaultUrl.url).to be_nil
-    expect(page.url).to be_nil
+    expect(page_with_no_url.url).to be_nil
   end
 
-  describe 'loaded?' do
-    it 'is true if displayed' do
-      page = CapybaraPage::Page.new
-      allow(page).to receive(:displayed?).and_return true
-      expect(page).to be_loaded
+  describe '#loaded?' do
+    subject { PageWithUrl.new }
+
+    before do
+      allow(subject).to receive(:displayed?).and_return(displayed?)
     end
 
-    it 'is false if not displayed' do
-      page = CapybaraPage::Page.new
-      allow(page).to receive(:displayed?).and_return false
-      expect(page).not_to be_loaded
+    context 'when page is loaded' do
+      let(:displayed?) { true }
+
+      it { is_expected.to be_loaded }
+    end
+
+    context 'when page is not loaded' do
+      let(:displayed?) { false }
+
+      it { is_expected.not_to be_loaded }
     end
   end
 
   describe '#load' do
     it "should not allow loading if the url hasn't been set" do
-      class MyPageWithNoUrl < CapybaraPage::Page; end
-      page_with_no_url = MyPageWithNoUrl.new
-
-      expect { page_with_no_url.load }.to raise_error(CapybaraPage::NoUrlForPage)
+      expect { page_with_no_url.load }
+        .to raise_error(CapybaraPage::NoUrlForPage)
     end
 
     it 'should allow loading if the url has been set' do
-      class MyPageWithUrl < CapybaraPage::Page
-        set_url '/bob'
-      end
-      page_with_url = MyPageWithUrl.new
       expect { page_with_url.load }.not_to raise_error
     end
 
     it 'should allow expansions if the url has them' do
-      class MyPageWithUriTemplate < CapybaraPage::Page
-        set_url '/users{/username}{?query*}'
-      end
-      page_with_url = MyPageWithUriTemplate.new
+      expect { page_with_uri_template.load(username: 'foobar') }.not_to raise_error
 
-      expect { page_with_url.load(username: 'foobar') }.not_to raise_error
-      expect(page_with_url.url(username: 'foobar', query: { 'recent_posts' => 'true' }))
+      expect(page_with_uri_template.url(username: 'foobar', query: { 'recent_posts' => 'true' }))
         .to eq('/users/foobar?recent_posts=true')
-      expect(page_with_url.url(username: 'foobar')).to eq('/users/foobar')
-      expect(page_with_url.url).to eq('/users')
+
+      expect(page_with_uri_template.url).to eq('/users')
     end
 
     it 'should allow to load html' do
-      class Page < CapybaraPage::Page; end
-      page = Page.new
-      expect { page.load('<html/>') }.not_to raise_error
+      expect { page_with_url.load('<html/>') }.not_to raise_error
     end
 
     context 'when passed a block' do
-      let(:page_klass_with_load_validations) do
-        Class.new(CapybaraPage::Page) do
-          set_url '/foo_page'
+      class PageWithLoadValidations < CapybaraPage::Page
+        set_url '/foo_page'
 
-          def must_be_true
-            true
-          end
+        def must_be_true
+          true
+        end
 
-          def also_true
-            true
-          end
+        def also_true
+          true
+        end
 
-          def foo?
-            true
-          end
+        def foo?
+          true
+        end
 
-          load_validation { [must_be_true, 'It is not true!'] }
-          load_validation { [also_true, 'It is not also true!'] }
+        load_validation { [must_be_true, 'It is not true!'] }
+        load_validation { [also_true, 'It is not also true!'] }
+      end
+
+      let(:page_with_load_validations) { PageWithLoadValidations.new }
+
+      it 'should allow to load html and yields itself' do
+        expect(page_with_no_url.load('<html>hi<html/>', &:text)).to eq('hi')
+      end
+
+      context 'With Passing Load Validations' do
+        it 'executes the block' do
+          expect(page_with_load_validations.load { :return_this }).to eq(:return_this)
+        end
+
+        it 'yields itself to the passed block' do
+          expect(page_with_load_validations).to receive(:foo?).and_call_original
+
+          page_with_load_validations.load(&:foo?)
         end
       end
 
-      it 'executes a block when load validations pass' do
-        page = page_klass_with_load_validations.new
-        expect { page.load { true } }.not_to raise_error
-      end
+      context 'With Failing Load Validations' do
+        it 'raises an error' do
+          allow(page_with_load_validations).to receive(:must_be_true).and_return(false)
 
-      it 'yields itself to the passed block' do
-        page = page_klass_with_load_validations.new
-        expect(page).to receive(:foo?)
-        page.load { |p| p.foo? && true }
-      end
-
-      it 'should allow to load html and yields itself' do
-        class Page < CapybaraPage::Page; end
-        page = Page.new
-        expect(page.load('<html>hi<html/>', &:text)).to eq('hi')
-      end
-
-      it 'raises an error when a block passed and load validations fail' do
-        page = page_klass_with_load_validations.new
-        expect(page).to receive(:must_be_true).and_return(false)
-        expect { page.load { puts 'foo' } }.to raise_error(CapybaraPage::NotLoadedError, /It is not true!/)
+          expect { page_with_load_validations.load { puts 'foo' } }
+            .to raise_error(CapybaraPage::NotLoadedError, /It is not true!/)
+        end
       end
     end
   end
 
-  it 'should respond to set_url_matcher' do
-    expect(CapybaraPage::Page).to respond_to :set_url_matcher
-  end
-
   it 'url matcher should be nil by default' do
-    class PageDefaultUrlMatcher < CapybaraPage::Page; end
-    page = PageDefaultUrlMatcher.new
-    expect(PageDefaultUrlMatcher.url_matcher).to be_nil
-    expect(page.url_matcher).to be_nil
+    expect(PageWithNoUrl.url_matcher).to be_nil
+
+    expect(page_with_no_url.url_matcher).to be_nil
   end
 
   it 'should be able to set a url matcher against it' do
@@ -183,55 +195,46 @@ describe CapybaraPage::Page do
 
     it 'matches with all elements matching' do
       swap_current_url('https://joe:bump@bla.org:443/foo?bar=baz&bar=boof#myfragment')
-
       expect(page.displayed?).to be true
     end
 
     it "doesn't match with a non-matching fragment" do
       swap_current_url('https://joe:bump@bla.org:443/foo?bar=baz&bar=boof#otherfragment')
-
       expect(page.displayed?).to be false
     end
 
     it "doesn't match with a missing param" do
       swap_current_url('https://joe:bump@bla.org:443/foo?bar=baz#myfragment')
-
       expect(page.displayed?).to be false
     end
 
     it "doesn't match with wrong path" do
       swap_current_url('https://joe:bump@bla.org:443/not_foo?bar=baz&bar=boof#myfragment')
-
       expect(page.displayed?).to be false
     end
 
     it "doesn't match with wrong host" do
       swap_current_url('https://joe:bump@blabber.org:443/foo?bar=baz&bar=boof#myfragment')
-
       expect(page.displayed?).to be false
     end
 
     it "doesn't match with wrong user" do
       swap_current_url('https://joseph:bump@bla.org:443/foo?bar=baz&bar=boof#myfragment')
-
       expect(page.displayed?).to be false
     end
 
     it "doesn't match with wrong password" do
       swap_current_url('https://joe:bean@bla.org:443/foo?bar=baz&bar=boof#myfragment')
-
       expect(page.displayed?).to be false
     end
 
     it "doesn't match with wrong scheme" do
       swap_current_url('http://joe:bump@bla.org:443/foo?bar=baz&bar=boof#myfragment')
-
       expect(page.displayed?).to be false
     end
 
     it "doesn't match with wrong port" do
       swap_current_url('https://joe:bump@bla.org:8000/foo?bar=baz&bar=boof#myfragment')
-
       expect(page.displayed?).to be false
     end
   end
@@ -292,23 +295,23 @@ describe CapybaraPage::Page do
 
     it 'passes through incorrect expected_mappings from the be_displayed matcher' do
       swap_current_url('http://localhost:3000/foos/28')
-      expect(page).not_to be_displayed id: 17
+      expect(page).not_to be_displayed(id: 17)
     end
 
     it 'passes through correct expected_mappings from the be_displayed matcher' do
       swap_current_url('http://localhost:3000/foos/28')
-      expect(page).to be_displayed id: 28
+      expect(page).to be_displayed(id: 28)
     end
 
     describe '#url_matches' do
       it 'returns mappings from the current_url' do
         swap_current_url('http://localhost:3000/foos/15')
-        expect(page.url_matches).to eq 'scheme' => 'http', 'id' => '15'
+        expect(page.url_matches).to eq('scheme' => 'http', 'id' => '15')
       end
 
       it "returns nil if current_url doesn't match the url_matcher" do
         swap_current_url('http://localhost:3000/bars/15')
-        expect(page.url_matches).to eq nil
+        expect(page.url_matches).to be_nil
       end
     end
   end
@@ -323,19 +326,16 @@ describe CapybaraPage::Page do
     describe '#url_matches' do
       it 'returns regexp MatchData' do
         swap_current_url('http://localhost:3000/foos/15')
-
         expect(page.url_matches).to be_kind_of(MatchData)
       end
 
       it 'lets you get at the captures' do
         swap_current_url('http://localhost:3000/foos/15')
-
         expect(page.url_matches[1]).to eq '15'
       end
 
       it "returns nil if current_url doesn't match the url_matcher" do
         swap_current_url('http://localhost:3000/bars/15')
-
         expect(page.url_matches).to eq nil
       end
     end
@@ -358,12 +358,12 @@ describe CapybaraPage::Page do
   end
 
   it 'should raise an exception if passing a block to sections' do
-    expect { TestHomePage.new.nonexistent_section { :any_old_block } }
+    expect { TestHomePage.new.nonexistent_sections { :any_old_block } }
       .to raise_error(CapybaraPage::UnsupportedBlock)
-      .with_message('TestHomePage#nonexistent_section does not accept blocks, did you mean to define a (i)frame?')
+      .with_message('TestHomePage#nonexistent_sections does not accept blocks, did you mean to define a (i)frame?')
   end
 
   def swap_current_url(url)
-    allow(page).to receive(:page).and_return(double(current_url: url, document: double(session_options: double(default_max_wait_time: 0.1))))
+    allow(page).to receive(:page).and_return(double(current_url: url, document: double(session_options: double(default_max_wait_time: 0))))
   end
 end

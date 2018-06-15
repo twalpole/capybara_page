@@ -8,6 +8,5 @@ module CapybaraPage
   autoload :ElementChecker, 'capybara_page/element_checker'
   autoload :Page, 'capybara_page/page'
   autoload :Section, 'capybara_page/section'
-  autoload :Waiter, 'capybara_page/waiter'
   autoload :AddressableUrlMatcher, 'capybara_page/addressable_url_matcher'
 end

@@ -2,12 +2,13 @@
 
 require 'capybara'
 require 'capybara/dsl'
+require 'capybara/rspec/features'
 require 'selenium-webdriver'
 
 $LOAD_PATH << './test_site'
 $LOAD_PATH << './lib'
 
-require './features/support/test_app'
+require 'support/test_app'
 require 'capybara_page'
 require 'test_site'
 require 'sections/people'
@@ -28,6 +29,13 @@ require 'pages/section_experiments'
 RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
+  end
+
+  config.around type: :feature do |example|
+    Capybara.using_driver(:selenium) do
+      @test_site = TestSite.new
+      example.run
+    end
   end
 end
 

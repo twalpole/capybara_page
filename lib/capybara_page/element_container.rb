@@ -28,7 +28,7 @@ module CapybaraPage
     end
 
     def section(section_name, *args, &block)
-      section_class, find_args = extract_section_options args, &block
+      section_class, find_args = extract_section_options(args, &block)
       build section_name, *find_args do
         define_method section_name do |*runtime_args, &runtime_block|
           section_class.new self, find(*self.class.merge_args(find_args, runtime_args)), &runtime_block
@@ -37,10 +37,10 @@ module CapybaraPage
     end
 
     def sections(section_collection_name, *args, &block)
-      section_class, find_args = extract_section_options args, &block
+      section_class, find_args = extract_section_options(args, &block)
       build section_collection_name, *find_args do
-        define_method section_collection_name do |*runtime_args, &blk|
-          self.class.raise_if_block(self, section_collection_name.to_s, !blk.nil?)
+        define_method section_collection_name do |*runtime_args, &runtime_block|
+          self.class.raise_if_block(self, section_collection_name.to_s, !runtime_block.nil?)
           find_all(*self.class.merge_args(find_args, runtime_args)).map do |element|
             section_class.new self, element
           end
@@ -52,9 +52,7 @@ module CapybaraPage
       element_find_args = deduce_iframe_element_find_args(args)
       scope_find_args = deduce_iframe_scope_find_args(args)
       add_to_mapped_items iframe_name
-      create_existence_checker iframe_name, *element_find_args
-      create_nonexistence_checker iframe_name, *element_find_args
-      create_waiter iframe_name, *element_find_args
+      add_iframe_helper_methods(iframe_name, *element_find_args)
       define_method iframe_name do |&block|
         page.within_frame(*scope_find_args) do
           block.call iframe_page_class.new
@@ -97,8 +95,16 @@ module CapybaraPage
       create_existence_checker name, *find_args
       create_nonexistence_checker name, *find_args
       create_waiter name, *find_args
+      create_nonexistence_waiter(name, *find_args)
       create_visibility_waiter name, *find_args
       create_invisibility_waiter name, *find_args
+    end
+
+    def add_iframe_helper_methods(name, *find_args)
+      create_existence_checker(name, *find_args)
+      create_nonexistence_checker(name, *find_args)
+      create_waiter(name, *find_args)
+      create_nonexistence_waiter(name, *find_args)
     end
 
     def create_helper_method(proposed_method_name, *find_args)
@@ -133,7 +139,18 @@ module CapybaraPage
         define_method method_name do |timeout = nil, *runtime_args|
           root_element.assert_selector(*self.class.merge_args(find_args, runtime_args, wait: timeout))
         rescue Capybara::ExpectationNotMet => e
-          raise CapybaraPage::TimeoutException, "Timed out waiting for #{element_name}: #{e.message}"
+          raise CapybaraPage::TimeOutWaitingForExistenceError, "Timed out waiting for #{self.class}##{element_name}: #{e.message}"
+        end
+      end
+    end
+
+    def create_nonexistence_waiter(element_name, *find_args)
+      method_name = "wait_for_no_#{element_name}"
+      create_helper_method(method_name, *find_args) do
+        define_method(method_name) do |timeout = nil, *runtime_args|
+          root_element.assert_no_selector(*self.class.merge_args(find_args, runtime_args, wait: timeout))
+        rescue Capybara::ExpectationNotMet => e
+          raise CapybaraPage::TimeOutWaitingForNonExistenceError, "Timed out waiting for no #{self.class}##{element_name}: #{e.message}"
         end
       end
     end
@@ -190,13 +207,36 @@ module CapybaraPage
 
     def extract_section_options(args, &block)
       if args.first.is_a?(Class)
-        section_class = args.shift
-      elsif block_given?
-        section_class = Class.new CapybaraPage::Section, &block
-      else
-        raise ArgumentError, 'You should provide section class either as a block, or as the second argument.'
+        klass = args.shift
+        section_class = klass if klass.ancestors.include?(CapybaraPage::Section)
       end
-      [section_class, args]
+
+      section_class = deduce_section_class(section_class, &block)
+      arguments = deduce_search_arguments(section_class, args)
+      [section_class, arguments]
+    end
+
+    def deduce_section_class(base_class, &block)
+      klass = base_class
+
+      klass = Class.new(klass || CapybaraPage::Section, &block) if block_given?
+
+      unless klass
+        raise ArgumentError, "You should provide descendant of CapybaraPage::Section \
+class or/and a block as the second argument."
+      end
+      klass
+    end
+
+    def deduce_search_arguments(section_class, args)
+      extract_search_arguments(args) ||
+        extract_search_arguments(section_class.default_search_arguments) ||
+        raise(ArgumentError, "You should provide search arguments \
+in section creation or set_default_search_arguments within section class")
+    end
+
+    def extract_search_arguments(args)
+      args if args && !args.empty?
     end
   end
 end

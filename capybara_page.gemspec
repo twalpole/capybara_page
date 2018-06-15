@@ -18,7 +18,6 @@ Gem::Specification.new do |s|
   s.add_dependency 'capybara', ['~>3.2']
 
   s.add_development_dependency 'byebug'
-  s.add_development_dependency 'cucumber', ['2.4.0']
   s.add_development_dependency 'puma'
   s.add_development_dependency("rake")
   s.add_development_dependency 'rspec', ['~> 3.7']

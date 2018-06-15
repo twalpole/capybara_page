@@ -2,15 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Page Navigation' do
-  around :context do |example|
-    Capybara.using_driver(:selenium) do
-      example.run
-    end
-  end
-
-  before { @test_site = TestSite.new }
-
+feature 'Page Navigation' do
   it "goes to a static page" do
     @test_site.home.load
     expect(@test_site.home).to be_displayed
@@ -30,5 +22,11 @@ describe 'Page Navigation' do
   it "knows which page it's on" do
     @test_site.home.load
     expect(@test_site.redirect_page).not_to be_displayed
+  end
+
+  it "navigates to a different page" do
+    @test_site.home.load
+    @test_site.home.go_button.click
+    expect(@test_site.no_title).to be_displayed
   end
 end
