@@ -44,12 +44,12 @@ module CapybaraPage
 
       if expansion_or_html.is_a?(String)
         @page = Capybara.string(expansion_or_html)
-        yield self if block_given?
+        block_given? ? yield(self) : self
       else
         expanded_url = url(expansion_or_html)
         raise CapybaraPage::NoUrlForPage if expanded_url.nil?
         visit expanded_url
-        when_loaded(&block) if block_given?
+        block_given? ? when_loaded(&block) : self
       end
     end
 
